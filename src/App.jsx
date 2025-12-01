@@ -1,0 +1,1 @@
+export default function App(){ return <div className='p-10 text-xl'>NFL Parlay Tracker Pro Placeholder</div>; }
