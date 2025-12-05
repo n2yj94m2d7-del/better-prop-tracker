@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="slips icon">
+  <rect width="64" height="64" rx="12" fill="#1a1a1a"/>
+  <text x="10" y="40" fill="#f5f5f5" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600" letter-spacing="0.12em">sl</text>
+  <rect x="34" y="18" width="5" height="24" rx="2.5" fill="#f5f5f5"/>
+  <text x="43" y="40" fill="#f5f5f5" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600" letter-spacing="0.12em">p</text>
+</svg>

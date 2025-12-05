@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60">
+  <style>
+    .word {
+      font-family: 'Inter', sans-serif;
+      font-size: 44px;
+      fill: #FFFFFF;
+      font-weight: 500;
+    }
+  </style>
+
+  <text x="0" y="44" class="word">sl</text>
+
+  <rect id="ibar" x="68" y="12" width="6" height="30" rx="3" fill="#4EE79B"/>
+
+  <text x="88" y="44" class="word">ps</text>
+</svg>

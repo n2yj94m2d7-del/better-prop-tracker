@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120">
+  <style>
+    .base {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 82px;
+      fill: #000000;
+    }
+  </style>
+
+  <text x="0" y="84" class="base">s</text>
+
+  <path d="M85 10 Q80 10 80 15 L80 70 Q80 75 75 80 Q87 83 98 80 Q92 75 92 70 L92 15 Q92 10 87 10 Z" fill="#000000"/>
+
+  <path d="M125 90 Q130 90 130 85 L130 30 Q130 25 135 20 Q123 17 112 20 Q118 25 118 30 L118 85 Q118 90 123 90 Z" fill="#000000"/>
+
+  <text x="155" y="84" class="base">ps</text>
+</svg>
