@@ -1097,7 +1097,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 focus:outline-none"
+          className="w-full bg-transparent text-base text-white placeholder:text-gray-500 focus:outline-none"
         />
       </div>
     </label>
@@ -1126,7 +1126,7 @@ function PlayerField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Search player..."
-            className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 focus:outline-none"
+            className="w-full bg-transparent text-base text-white placeholder:text-gray-500 focus:outline-none"
           />
           {(isSearching || liveLoading) && (
             <span className="text-xs text-gray-400">Searching...</span>
@@ -1190,7 +1190,7 @@ function TeamField({ label, value, onChange, onSelect }) {
               setOpen(true);
             }}
             placeholder="Search team..."
-            className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 focus:outline-none"
+            className="w-full bg-transparent text-base text-white placeholder:text-gray-500 focus:outline-none"
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 100)}
           />

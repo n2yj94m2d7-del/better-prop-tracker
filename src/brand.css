@@ -21,3 +21,10 @@ body {
     #121826 100%
   );
 }
+
+/* Keep mobile inputs at 16px to prevent zoom */
+input,
+select,
+textarea {
+  font-size: 16px;
+}

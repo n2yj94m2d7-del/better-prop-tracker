@@ -37,19 +37,19 @@ export default function SlipInput({ addLine }) {
           value={player}
           onChange={(e) => setPlayer(e.target.value)}
           placeholder="Player (e.g. Justin Jefferson)"
-          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <input
           value={prop}
           onChange={(e) => setProp(e.target.value)}
           placeholder="Prop (e.g. 80+ receiving yards)"
-          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <input
           value={odds}
           onChange={(e) => setOdds(e.target.value)}
           placeholder="Odds (e.g. -110)"
-          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>
 
