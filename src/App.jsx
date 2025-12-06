@@ -291,9 +291,9 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen px-4 pb-24 sm:px-6 md:px-8 lg:px-12">
+    <div className="min-h-screen h-screen overflow-hidden px-4 pb-24 sm:px-6 md:px-8 lg:px-12">
       {showSplash && <Splash />}
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto flex h-full max-w-4xl flex-col gap-4">
         <Header liveCount={liveCount} />
 
         <ModeTabs
@@ -306,6 +306,8 @@ export default function App() {
           <AddPanel
             onSubmit={addLegToQueue}
             panelRef={addPanelRef}
+            containerClassName="flex-1 overflow-hidden rounded-3xl border border-white/5 bg-[var(--panel)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
+            scrollClassName="mt-4 space-y-4 overflow-y-auto pr-1 pb-8 max-h-[calc(100vh-220px)]"
           />
         )}
 
@@ -435,7 +437,7 @@ function TrackList({
 }) {
   if (!legs.length) {
     return (
-      <div className="rounded-3xl border border-white/5 bg-[var(--panel)] p-8 text-center text-gray-300 shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
+      <div className="flex flex-1 flex-col rounded-3xl border border-white/5 bg-[var(--panel)] p-6 text-center text-gray-300 shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
         <p className="text-lg font-semibold text-white">
           No slips yet
         </p>
@@ -470,7 +472,7 @@ function TrackList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col rounded-3xl border border-white/5 bg-[var(--panel)] p-4 shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
       {queuedLegs.length > 0 && (
         <div className="flex flex-col gap-2 rounded-3xl border border-[var(--accent-border)] bg-[var(--card-soft)] p-4 text-sm text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -518,14 +520,16 @@ function TrackList({
             : "Live auto-refreshing"}
         </span>
       </div>
-      {legs.map((leg) => (
-        <LegCard
-          key={leg.id}
-          leg={leg}
-          updateStatus={updateStatus}
-          removeLeg={removeLeg}
-        />
-      ))}
+      <div className="mt-3 flex-1 space-y-3 overflow-y-auto pr-1">
+        {legs.map((leg) => (
+          <LegCard
+            key={leg.id}
+            leg={leg}
+            updateStatus={updateStatus}
+            removeLeg={removeLeg}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -724,7 +728,12 @@ function StatusBadge({ status }) {
   );
 }
 
-function AddPanel({ onSubmit, panelRef }) {
+function AddPanel({
+  onSubmit,
+  panelRef,
+  containerClassName = "rounded-3xl border border-white/5 bg-[var(--panel)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.45)] mb-8",
+  scrollClassName = "mt-5 space-y-4 pb-8",
+}) {
   const [type, setType] = useState("player");
   const [playerQuery, setPlayerQuery] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -905,10 +914,7 @@ function AddPanel({ onSubmit, panelRef }) {
   };
 
   return (
-    <div
-      ref={panelRef}
-      className="rounded-3xl border border-white/5 bg-[var(--panel)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.45)] mb-8"
-    >
+    <div ref={panelRef} className={containerClassName}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xl font-semibold text-white">Add picks</p>
@@ -923,7 +929,7 @@ function AddPanel({ onSubmit, panelRef }) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+      <form onSubmit={handleSubmit} className={scrollClassName}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {["player", "spread", "total", "winner"].map((value) => (
             <button
@@ -1029,7 +1035,7 @@ function AddPanel({ onSubmit, panelRef }) {
         )}
 
         {type !== "winner" && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 items-end">
             <Field
               label={type === "spread" ? "Spread line" : "Line"}
               value={line}
@@ -1038,26 +1044,21 @@ function AddPanel({ onSubmit, panelRef }) {
               inputMode="decimal"
               pattern="[-]?[0-9]*[.,]?[0-9]*"
             />
-            <div>
-              <p className="mb-2 text-sm font-semibold text-gray-200">
-                Direction
-              </p>
-              <div className="flex gap-2">
-                {["over", "under"].map((value) => (
-                  <button
-                key={value}
-                type="button"
-                onClick={() => setDirection(value)}
-                className={`flex-1 rounded-2xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                      direction === value
-                        ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                        : "border-white/10 bg-white/5 text-gray-300"
-                    }`}
-                  >
-                    {value === "over" ? "↗ Over" : "↘ Under"}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-end justify-end gap-2">
+              {["over", "under"].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDirection(value)}
+                  className={`flex-1 rounded-2xl border px-4 py-2.5 text-sm font-semibold capitalize transition ${
+                    direction === value
+                      ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                      : "border-white/10 bg-white/5 text-gray-300"
+                  }`}
+                >
+                  {value === "over" ? "↗ Over" : "↘ Under"}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -1088,7 +1089,7 @@ function Field({
   return (
     <label className="block space-y-2">
       <span className="text-sm font-semibold text-gray-200">{label}</span>
-      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-white focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)]">
+      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)]">
         {icon && icon}
         <input
           type={type}
@@ -1140,7 +1141,7 @@ function PlayerField({
     <label className="block space-y-2">
       <span className="text-sm font-semibold text-gray-200">{label}</span>
       <div className="relative">
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-white transition focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)] focus-within:ring-2 focus-within:ring-[var(--accent-border)]">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white transition focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)] focus-within:ring-2 focus-within:ring-[var(--accent-border)]">
           <User className="h-4 w-4 text-gray-500" />
           <input
             ref={inputRef}
@@ -1202,7 +1203,7 @@ function TeamField({ label, value, onChange, onSelect }) {
     <label className="block space-y-2">
       <span className="text-sm font-semibold text-gray-200">{label}</span>
       <div className="relative">
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-white transition focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)] focus-within:ring-2 focus-within:ring-[var(--accent-border)]">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white transition focus-within:border-[var(--accent-border)] focus-within:bg-[var(--accent-faint)] focus-within:ring-2 focus-within:ring-[var(--accent-border)]">
           <User className="h-4 w-4 text-gray-500" />
           <input
             value={value}
