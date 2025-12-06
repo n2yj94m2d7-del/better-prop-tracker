@@ -274,8 +274,8 @@ export default function App() {
           result: leg.result || 0,
         }))
       );
-    setLastUpdate(new Date());
-  }
+      setLastUpdate(new Date());
+    }
   };
 
   useEffect(() => {
@@ -731,13 +731,8 @@ function StatusBadge({ status }) {
 function AddPanel({
   onSubmit,
   panelRef,
-<<<<<<< HEAD
-  containerClassName = "relative rounded-3xl border border-white/5 bg-[var(--panel)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.45)] mb-8 flex flex-col",
-  scrollClassName = "mt-5 space-y-4 pb-16",
-=======
   containerClassName = "relative rounded-3xl border border-white/5 bg-[var(--panel)] p-4 shadow-[0_12px_30px_rgba(0,0,0,0.45)] flex flex-col",
   scrollClassName = "mt-3 space-y-3 pb-14",
->>>>>>> updates
 }) {
   const [type, setType] = useState("player");
   const [playerQuery, setPlayerQuery] = useState("");
@@ -934,9 +929,8 @@ function AddPanel({
         </div>
       </div>
 
-<<<<<<< HEAD
-      <form onSubmit={handleSubmit} className="flex h-full flex-col gap-3">
-        <div className={scrollClassName}>
+      <form onSubmit={handleSubmit} className="flex h-full flex-col gap-2">
+        <div className={`${scrollClassName} flex-1 overflow-y-auto pr-1`}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {["player", "spread", "total", "winner"].map((value) => (
               <button
@@ -944,44 +938,6 @@ function AddPanel({
                 type="button"
                 onClick={() => {
                   setType(value);
-=======
-      <form onSubmit={handleSubmit} className="flex h-full flex-col gap-2">
-        <div className={`${scrollClassName} flex-1 overflow-y-auto pr-1`}>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {["player", "spread", "total", "winner"].map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => {
-                setType(value);
-                setSuppressResults(false);
-                setPlayerQuery("");
-                setSelectedPlayer(null);
-                setTeamQuery("");
-                setSelectedTeam(null);
-                setProp("");
-                setLine("");
-                setDirection("over");
-              }}
-              className={`rounded-2xl border px-3 py-2 text-sm font-semibold capitalize transition ${
-                type === value
-                  ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                  : "border-white/10 bg-white/5 text-gray-300"
-              }`}
-            >
-              {value === "player" ? "Player Prop" : value === "winner" ? "ML" : value}
-            </button>
-          ))}
-          </div>
-
-        {type === "player" && (
-          <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <PlayerField
-                label="Player"
-                value={playerQuery}
-                onChange={(val) => {
->>>>>>> updates
                   setSuppressResults(false);
                   setPlayerQuery("");
                   setSelectedPlayer(null);
@@ -997,7 +953,11 @@ function AddPanel({
                     : "border-white/10 bg-white/5 text-gray-300"
                 }`}
               >
-                {value === "player" ? "Player Prop" : value === "winner" ? "ML" : value}
+                {value === "player"
+                  ? "Player Prop"
+                  : value === "winner"
+                  ? "ML"
+                  : value}
               </button>
             ))}
           </div>
@@ -1080,7 +1040,7 @@ function AddPanel({
           )}
 
           {type !== "winner" && (
-            <div className="grid grid-cols-2 gap-3 items-end">
+            <div className="grid grid-cols-2 items-end gap-3">
               <Field
                 label={type === "spread" ? "Spread line" : "Line"}
                 value={line}
@@ -1109,7 +1069,6 @@ function AddPanel({
           )}
         </div>
 
-<<<<<<< HEAD
         <div className="sticky bottom-0 left-0 right-0 z-10 bg-[var(--panel)] pt-2 pb-1">
           <button
             type="submit"
@@ -1119,88 +1078,6 @@ function AddPanel({
             Add to slip
           </button>
         </div>
-=======
-            <StatSelect
-              label="Prop"
-              value={prop}
-              onChange={setProp}
-              options={statOptions}
-              shouldOpen={openStat}
-              onOpened={() => setOpenStat(false)}
-              innerRef={statRef}
-            />
-          </>
-        )}
-
-        {type !== "player" && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <TeamField
-              label="Team"
-              value={teamQuery}
-              onChange={(val) => {
-                setTeamQuery(val);
-                setSelectedTeam(null);
-              }}
-              onSelect={(team) => {
-                setTeamQuery(team.name);
-                setSelectedTeam(team);
-              }}
-            />
-            {type === "total" && (
-              <DropdownSelect
-                label="Market"
-                value={totalMarket}
-                onChange={setTotalMarket}
-                options={[
-                  "Game Total",
-                  "Team Total",
-                  "1st Half Total",
-                  "2nd Half Total",
-                ]}
-              />
-            )}
-          </div>
-        )}
-
-        {type !== "winner" && (
-          <div className="grid grid-cols-2 gap-3 items-end">
-            <Field
-              label={type === "spread" ? "Spread line" : "Line"}
-              value={line}
-              onChange={setLine}
-              placeholder={type === "spread" ? "-7" : "225.5"}
-              inputMode="decimal"
-              pattern="[-]?[0-9]*[.,]?[0-9]*"
-            />
-            <div className="flex items-end justify-end gap-2">
-              {["over", "under"].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setDirection(value)}
-                  className={`flex-1 rounded-2xl border px-4 py-2.5 text-sm font-semibold capitalize transition ${
-                    direction === value
-                      ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "border-white/10 bg-white/5 text-gray-300"
-                  }`}
-                >
-                  {value === "over" ? "↗ Over" : "↘ Under"}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        </div>
-
-        <button
-          type="submit"
-          className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-base font-semibold text-[#0b0b18] transition hover:opacity-90"
-        >
-          <Plus className="h-5 w-5" />
-          Add to slip
-        </button>
->>>>>>> updates
       </form>
 
     </div>
