@@ -1116,22 +1116,24 @@ function PlayerField({
   const inputRef = useRef(null);
   const forceBlurMobile = () => {
     const el = inputRef.current;
-    if (el) el.blur();
-    if (typeof document !== "undefined") {
-      const temp = document.createElement("input");
-      temp.type = "text";
-      temp.setAttribute("aria-hidden", "true");
-      temp.style.position = "fixed";
-      temp.style.opacity = "0";
-      temp.style.height = "0";
-      temp.style.width = "0";
-      document.body.appendChild(temp);
-      temp.focus({ preventScroll: true });
+    if (!el) return;
+    const prevMode = el.getAttribute("inputmode");
+    el.setAttribute("readonly", "true");
+    el.setAttribute("inputmode", "none");
+    requestAnimationFrame(() => {
+      el.blur();
+      if (typeof document !== "undefined") {
+        document.activeElement?.blur?.();
+      }
       setTimeout(() => {
-        temp.blur();
-        temp.remove();
-      }, 40);
-    }
+        el.removeAttribute("readonly");
+        if (prevMode) {
+          el.setAttribute("inputmode", prevMode);
+        } else {
+          el.removeAttribute("inputmode");
+        }
+      }, 80);
+    });
   };
 
   return (
