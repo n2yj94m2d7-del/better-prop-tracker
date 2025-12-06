@@ -1049,13 +1049,13 @@ function AddPanel({
                 inputMode="decimal"
                 pattern="[-]?[0-9]*[.,]?[0-9]*"
               />
-              <div className="flex items-end justify-end gap-2">
+              <div className="flex items-end gap-2">
                 {["over", "under"].map((value) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => setDirection(value)}
-                    className={`flex-1 rounded-2xl border px-4 py-2.5 text-sm font-semibold capitalize transition ${
+                    className={`w-full rounded-2xl border px-4 py-2.5 text-sm font-semibold capitalize transition ${
                       direction === value
                         ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
                         : "border-white/10 bg-white/5 text-gray-300"
@@ -1067,16 +1067,16 @@ function AddPanel({
               </div>
             </div>
           )}
-        </div>
 
-        <div className="sticky bottom-0 left-0 right-0 z-10 bg-[var(--panel)] pt-2 pb-1">
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-base font-semibold text-[#0b0b18] transition hover:opacity-90"
-          >
-            <Plus className="h-5 w-5" />
-            Add to slip
-          </button>
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-base font-semibold text-[#0b0b18] transition hover:opacity-90"
+            >
+              <Plus className="h-5 w-5" />
+              Add to slip
+            </button>
+          </div>
         </div>
       </form>
 
