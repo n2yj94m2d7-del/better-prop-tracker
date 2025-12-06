@@ -1114,6 +1114,25 @@ function PlayerField({
   liveLoading,
 }) {
   const inputRef = useRef(null);
+  const forceBlurMobile = () => {
+    const el = inputRef.current;
+    if (el) el.blur();
+    if (typeof document !== "undefined") {
+      const temp = document.createElement("input");
+      temp.type = "text";
+      temp.setAttribute("aria-hidden", "true");
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      temp.style.height = "0";
+      temp.style.width = "0";
+      document.body.appendChild(temp);
+      temp.focus({ preventScroll: true });
+      setTimeout(() => {
+        temp.blur();
+        temp.remove();
+      }, 40);
+    }
+  };
 
   return (
     <label className="block space-y-2">
@@ -1142,7 +1161,7 @@ function PlayerField({
                 type="button"
                 onClick={() => {
                   onSelect(player);
-                  inputRef.current?.blur();
+                  requestAnimationFrame(forceBlurMobile);
                 }}
                 className="flex w-full items-center gap-3 px-3 py-3 text-left text-sm text-white hover:bg-white/5"
               >
