@@ -291,7 +291,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen h-screen overflow-hidden px-4 pb-24 sm:px-6 md:px-8 lg:px-12">
+    <div className="min-h-screen h-screen overflow-hidden px-3 pb-8 sm:px-6 md:px-8 lg:px-12">
       {showSplash && <Splash />}
       <div className="mx-auto flex h-full max-w-4xl flex-col gap-4">
         <Header liveCount={liveCount} />
@@ -349,7 +349,7 @@ export default function App() {
 
 function Header({ liveCount }) {
   return (
-    <header className="flex items-center justify-center pt-6">
+    <header className="flex items-center justify-center pt-4">
       <Logo />
     </header>
   );
@@ -731,8 +731,8 @@ function StatusBadge({ status }) {
 function AddPanel({
   onSubmit,
   panelRef,
-  containerClassName = "rounded-3xl border border-white/5 bg-[var(--panel)] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.45)] mb-8",
-  scrollClassName = "mt-5 space-y-4 pb-8",
+  containerClassName = "relative rounded-3xl border border-white/5 bg-[var(--panel)] p-4 shadow-[0_12px_30px_rgba(0,0,0,0.45)] flex flex-col",
+  scrollClassName = "mt-3 space-y-3 pb-14",
 }) {
   const [type, setType] = useState("player");
   const [playerQuery, setPlayerQuery] = useState("");
@@ -929,8 +929,9 @@ function AddPanel({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className={scrollClassName}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <form onSubmit={handleSubmit} className="flex h-full flex-col gap-2">
+        <div className={`${scrollClassName} flex-1 overflow-y-auto pr-1`}>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {["player", "spread", "total", "winner"].map((value) => (
             <button
               key={value}
@@ -955,7 +956,7 @@ function AddPanel({
               {value === "player" ? "Player Prop" : value === "winner" ? "ML" : value}
             </button>
           ))}
-        </div>
+          </div>
 
         {type === "player" && (
           <>
@@ -1063,9 +1064,11 @@ function AddPanel({
           </div>
         )}
 
+        </div>
+
         <button
           type="submit"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-base font-semibold text-[#0b0b18] transition hover:opacity-90"
+          className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] px-4 py-3 text-base font-semibold text-[#0b0b18] transition hover:opacity-90"
         >
           <Plus className="h-5 w-5" />
           Add to slip
