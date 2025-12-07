@@ -119,6 +119,7 @@ const statOptions = [
 ];
 
 const defaultModes = ["add", "tracking"];
+const allowedPositions = new Set(["QB", "RB", "WR", "TE", "FB"]);
 const STORAGE_KEYS = {
   legs: "bpt_legs",
   queued: "bpt_queued_legs",
@@ -234,13 +235,14 @@ export default function App() {
         prev.map((leg) => {
           const summary = leg.eventId ? summaryMap[leg.eventId] : null;
           if (!summary) {
-            return {
-              ...leg,
-              status: "unavailable",
-              result: leg.result || 0,
-              gameScore: null,
-            };
+            return { ...leg }; // keep prior state if no summary yet
           }
+
+          const statusType =
+            summary?.header?.competitions?.[0]?.status?.type || {};
+          const gameState = statusType.state || "pre";
+          const isLive = gameState === "in";
+          const completed = Boolean(statusType.completed);
 
           if (leg.type === "winner") {
             const winnerUpdate = evaluateWinner(summary, leg.team);
@@ -258,10 +260,6 @@ export default function App() {
             };
           }
 
-          const gameState =
-            summary?.header?.competitions?.[0]?.status?.type?.state || "pre";
-          const isLive = gameState === "in";
-
           const currentValue = getPlayerStatValue(
             summary,
             leg.playerId,
@@ -272,6 +270,23 @@ export default function App() {
           let status = leg.status;
           if (isLive) {
             status = "live";
+          } else if (completed) {
+            const lineVal =
+              leg.line === undefined || leg.line === null
+                ? 0
+                : Number(leg.line);
+            if (
+              currentValue !== null &&
+              currentValue !== undefined &&
+              !Number.isNaN(lineVal) &&
+              leg.direction
+            ) {
+              if (leg.direction === "over") {
+                status = currentValue > lineVal ? "hit" : "miss";
+              } else if (leg.direction === "under") {
+                status = currentValue < lineVal ? "hit" : "miss";
+              }
+            }
           } else {
             status = "unavailable";
           }
@@ -557,7 +572,7 @@ function TrackList({
   }
 
   return (
-    <div className="flex flex-1 flex-col rounded-3xl border border-white/5 bg-[var(--panel)] p-4 shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
+    <div className="flex flex-1 flex-col rounded-3xl border border-white/5 bg-[var(--panel)] p-4 shadow-[0_20px_40px_rgba(0,0,0,0.35)] max-h-[72vh] sm:max-h-[78vh] overflow-hidden">
       {queuedLegs.length > 0 && (
         <div className="flex flex-col gap-2 rounded-3xl border border-[var(--accent-border)] bg-[var(--card-soft)] p-4 text-sm text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -905,26 +920,63 @@ function AddPanel({
   // Load full NFL roster once (Sleeper) for local filtering
   useEffect(() => {
     let ignore = false;
+    const fetchEspnRoster = async () => {
+      const res = await fetch(
+        "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes?limit=2000"
+      );
+      if (!res.ok) throw new Error("espn roster fetch failed");
+      const data = await res.json();
+      const items = data?.items || data?.athletes || [];
+      return (
+        items
+          .filter((p) =>
+            allowedPositions.has(
+              (p?.position?.abbreviation || "").toUpperCase()
+            )
+          )
+          .map((p) => ({
+            id: p?.id || p?.uid || p?.fullName || p?.displayName,
+            name: p?.fullName || p?.displayName || p?.shortName || "",
+            team: (p?.team?.abbreviation || "NFL").toUpperCase(),
+            position: (p?.position?.abbreviation || "").toUpperCase(),
+          })) || []
+      );
+    };
+
+    const fetchSleeperRoster = async () => {
+      const res = await fetch("https://api.sleeper.app/v1/players/nfl");
+      if (!res.ok) throw new Error("roster fetch failed");
+      const data = await res.json();
+      return (
+        Object.values(data)
+          .filter(
+            (p) =>
+              p?.active &&
+              !p?.retired &&
+              allowedPositions.has((p.position || "").toUpperCase())
+          )
+          .map((p) => ({
+            id: p.player_id || p.full_name || p.last_name || Math.random(),
+            name:
+              p.full_name ||
+              `${p.first_name || ""} ${p.last_name || ""}`.trim(),
+            team: (p.team || "NFL").toUpperCase(),
+            position: (p.position || "").toUpperCase(),
+          })) || []
+      );
+    };
+
     const loadRoster = async () => {
       if (rosterLoading) return;
       setRosterLoading(true);
       try {
-        const res = await fetch("https://api.sleeper.app/v1/players/nfl");
-        if (!res.ok) throw new Error("roster fetch failed");
-        const data = await res.json();
-        const pool =
-          Object.values(data)
-            .filter((p) => p?.active && !p?.retired)
-            .map((p) => ({
-              id: p.player_id || p.full_name || p.last_name || Math.random(),
-              name:
-                p.full_name ||
-                `${p.first_name || ""} ${p.last_name || ""}`.trim(),
-              team: p.team || "NFL",
-              position: p.position || "",
-            })) || [];
+        const [espn, sleeper] = await Promise.all([
+          fetchEspnRoster().catch(() => []),
+          fetchSleeperRoster().catch(() => []),
+        ]);
+        const pool = [...localRoster, ...espn, ...sleeper];
         if (!ignore) {
-          const merged = dedupeRoster([...pool, ...localRoster]);
+          const merged = dedupeRoster(pool); // prefer curated roster values
           setRoster(merged);
           setRosterLoaded(true);
         }
@@ -1548,29 +1600,50 @@ function filterFallback(query) {
 function filterRoster(list, query) {
   const q = query.trim().toLowerCase();
   if (!q || !list?.length) return [];
+  const canonicalTeam = new Map(
+    (localRoster || []).map((p) => [p.name.toLowerCase(), p.team])
+  );
   const matches = list.filter((player) => {
     const name = player?.name?.toLowerCase() || "";
-    const team = player?.team?.toLowerCase() || "";
+    const teamLookup =
+      canonicalTeam.get(player?.name?.toLowerCase?.() || "") ||
+      player?.team ||
+      "";
+    const team = teamLookup.toLowerCase();
     return name.includes(q) || team.includes(q);
   });
-  // de-dupe on name + team
+  // de-dupe on name + team, normalizing to canonical team when available
   const seen = new Set();
-  return matches.filter((p) => {
-    const key = `${p.name}-${p.team}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return matches
+    .map((p) => {
+      const canonical = canonicalTeam.get(p.name?.toLowerCase?.() || "");
+      const team = (canonical || p.team || "").toUpperCase();
+      const key = `${(p.name || "").toLowerCase()}-${team}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return { ...p, team };
+    })
+    .filter(Boolean);
 }
 
 function dedupeRoster(list) {
+  const canonicalTeam = new Map(
+    (localRoster || []).map((p) => [p.name.toLowerCase(), p.team])
+  );
   const seen = new Set();
-  return list.filter((p) => {
-    const key = `${p.name}-${p.team}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return list
+    .map((p) => {
+      if (!p?.name) return null;
+      const nameKey = (p.name || "").toLowerCase();
+      const canonTeam = canonicalTeam.get(nameKey);
+      const team = (canonTeam || p.team || "NFL").toUpperCase();
+      const position = (p.position || "").toUpperCase();
+      const key = `${nameKey}-${team}`;
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return { ...p, team, position };
+    })
+    .filter(Boolean);
 }
 
 function formatSpread(value) {
