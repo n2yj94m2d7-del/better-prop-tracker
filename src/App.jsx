@@ -174,6 +174,7 @@ export default function App() {
             ...leg,
             status: "unavailable",
             result: leg.result || 0,
+            gameScore: null,
           }))
         );
         setLastUpdate(now);
@@ -231,6 +232,23 @@ export default function App() {
               ...leg,
               status: "unavailable",
               result: leg.result || 0,
+              gameScore: null,
+            };
+          }
+
+          if (leg.type === "winner") {
+            const winnerUpdate = evaluateWinner(summary, leg.team);
+            return {
+              ...leg,
+              ...winnerUpdate,
+            };
+          }
+
+          if (leg.type === "spread") {
+            const spreadUpdate = evaluateSpread(summary, leg.team, leg.line);
+            return {
+              ...leg,
+              ...spreadUpdate,
             };
           }
 
@@ -245,7 +263,6 @@ export default function App() {
             leg.statType || leg.prop
           );
 
-          const lineVal = leg.line || 0;
           let status = leg.status;
           if (isLive) {
             status = "live";
@@ -260,6 +277,7 @@ export default function App() {
                 ? leg.result || 0
                 : currentValue,
             status,
+            gameScore: leg.gameScore || null,
           };
         })
       );
@@ -585,8 +603,11 @@ function QueueDrawer({ items, open, onToggle, onRemove, onSend, onAddMore }) {
                 <div className="flex flex-col">
                   <span className="font-semibold">{leg.player}</span>
                   <span className="text-xs text-gray-400">
-                    {leg.direction ? leg.direction.toUpperCase() : ""}{" "}
-                    {leg.prop} {leg.line ? `@ ${leg.line}` : ""}
+                    {leg.type === "spread"
+                      ? `Spread ${formatSpread(leg.line)}`
+                      : `${leg.direction ? leg.direction.toUpperCase() : ""} ${
+                          leg.prop
+                        } ${leg.line ? `@ ${leg.line}` : ""}`}
                   </span>
                 </div>
                 <button
@@ -622,6 +643,8 @@ function QueueDrawer({ items, open, onToggle, onRemove, onSend, onAddMore }) {
 }
 
 function LegCard({ leg, updateStatus, removeLeg }) {
+  const isSpread = leg.type === "spread";
+  const isWinner = leg.type === "winner";
   const statusTone =
     leg.status === "hit"
       ? "bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent-border)]"
@@ -632,13 +655,29 @@ function LegCard({ leg, updateStatus, removeLeg }) {
       : "bg-amber-500/10 text-amber-300 border border-amber-500/30";
 
   const progress =
-    leg.line && leg.result
+    !isSpread && leg.line && leg.result
       ? Math.min(100, Math.round((leg.result / leg.line) * 100))
       : 0;
   const progressTone =
     progress >= 100 || leg.status === "hit"
       ? "bg-emerald-400"
       : "bg-rose-500";
+  const description = isSpread
+    ? `Spread ${formatSpread(leg.line)}`
+    : isWinner
+    ? "Moneyline"
+    : `${leg.direction?.toUpperCase() || "OVER"} ${leg.prop}`;
+  const finalScore =
+    isSpread && leg.gameScore
+      ? `${(leg.team || "TEAM").toUpperCase()} ${leg.gameScore.team} - ${
+          leg.gameScore.opponentAbbr || "OPP"
+        } ${leg.gameScore.opponent}`
+      : null;
+  const showScoreBox =
+    (isSpread || isWinner) &&
+    leg.gameScore &&
+    Number.isFinite(leg.gameScore.team) &&
+    Number.isFinite(leg.gameScore.opponent);
 
   return (
     <div className="rounded-3xl border border-[rgba(0,255,180,0.15)] bg-[var(--card-strong)] p-4 shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
@@ -652,8 +691,11 @@ function LegCard({ leg, updateStatus, removeLeg }) {
             <p className="text-sm text-gray-400">{leg.league || "NFL"}</p>
             <p className="mt-1 flex items-center gap-2 text-sm text-gray-200">
               <TrendingUp className="h-4 w-4 text-[var(--accent)]" />
-              {leg.direction?.toUpperCase() || "OVER"} {leg.prop}
+              {description}
             </p>
+            {isSpread && finalScore && (
+              <p className="text-xs text-gray-400">Final: {finalScore}</p>
+            )}
           </div>
         </div>
         <span className={`rounded-full px-3 py-1 text-sm font-semibold ${statusTone}`}>
@@ -665,21 +707,45 @@ function LegCard({ leg, updateStatus, removeLeg }) {
         </span>
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2 text-white">
-        <span className="text-3xl font-semibold">
-          {leg.result || 0}
-        </span>
-        {leg.line && (
-          <span className="text-lg text-gray-500">/ {leg.line}</span>
-        )}
-      </div>
+      {showScoreBox ? (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-[#0d1020] p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <ScorePill
+              label={(leg.team || "TEAM").toUpperCase()}
+              score={leg.gameScore.team}
+              tone="team"
+            />
+            <ScorePill
+              label={leg.gameScore.opponentAbbr || "OPP"}
+              score={leg.gameScore.opponent}
+              tone="opponent"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 flex items-baseline gap-2 text-white">
+          <span className="text-3xl font-semibold">
+            {isSpread ? formatSpread(leg.result || 0) : leg.result || 0}
+          </span>
+          {leg.line && !isSpread && (
+            <span className="text-lg text-gray-500">/ {leg.line}</span>
+          )}
+          {isSpread && leg.line && (
+            <span className="text-sm text-gray-400">
+              Line {formatSpread(leg.line)}
+            </span>
+          )}
+        </div>
+      )}
 
-      <div className="mt-3 h-3 rounded-full bg-[#111]">
-        <div
-          className={`h-full rounded-full transition-all ${progressTone}`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {!isSpread && !isWinner && (
+        <div className="mt-3 h-3 rounded-full bg-[#111]">
+          <div
+            className={`h-full rounded-full transition-all ${progressTone}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
 
       <div className="mt-4 flex items-center justify-between text-sm text-gray-300">
         <div className="flex items-center gap-2">
@@ -696,6 +762,21 @@ function LegCard({ leg, updateStatus, removeLeg }) {
           Delete
         </button>
       </div>
+    </div>
+  );
+}
+
+function ScorePill({ label, score, tone = "team" }) {
+  const tones = {
+    team: "bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-border)]",
+    opponent: "bg-white/5 text-white border-white/10",
+  };
+  return (
+    <div
+      className={`flex items-center justify-between rounded-xl border px-3 py-2 ${tones[tone] || tones.opponent}`}
+    >
+      <span className="text-xs uppercase tracking-wide">{label}</span>
+      <span className="text-xl font-semibold">{score}</span>
     </div>
   );
 }
@@ -858,7 +939,8 @@ function AddPanel({
     event.preventDefault();
     if (
       (type === "player" && (!playerQuery.trim() || !prop.trim())) ||
-      (type !== "player" && (!teamQuery.trim() || (type !== "winner" && !line)))
+      (type !== "player" &&
+        (!teamQuery.trim() || (type !== "winner" && line.trim() === "")))
     ) {
       return;
     }
@@ -868,13 +950,19 @@ function AddPanel({
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`;
 
+    const parsedLine =
+      line === "" || line === null || line === undefined
+        ? undefined
+        : Number(line);
+
     const base = {
       id,
-      line: line ? Number(line) : undefined,
+      line: Number.isNaN(parsedLine) ? undefined : parsedLine,
       result: 0,
-      direction: type === "winner" ? undefined : direction,
+      direction: type === "winner" || type === "spread" ? undefined : direction,
       status: "unavailable",
       type,
+      gameScore: null,
     };
 
     if (type === "player") {
@@ -945,7 +1033,7 @@ function AddPanel({
                   setSelectedTeam(null);
                   setProp("");
                   setLine("");
-                  setDirection("over");
+                  setDirection(value === "spread" ? null : "over");
                 }}
                 className={`rounded-2xl border px-3 py-2 text-sm font-semibold capitalize transition ${
                   type === value
@@ -1040,7 +1128,11 @@ function AddPanel({
           )}
 
           {type !== "winner" && (
-            <div className="grid grid-cols-3 items-stretch gap-3">
+            <div
+              className={`grid items-stretch gap-3 ${
+                type === "spread" ? "grid-cols-1" : "grid-cols-3"
+              }`}
+            >
               <Field
                 label={type === "spread" ? "Spread line" : "Line"}
                 value={line}
@@ -1049,20 +1141,21 @@ function AddPanel({
                 inputMode="decimal"
                 pattern="[-]?[0-9]*[.,]?[0-9]*"
               />
-              {["over", "under"].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setDirection(value)}
-                  className={`flex w-full min-w-0 items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold capitalize transition ${
-                    direction === value
-                      ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "border-white/10 bg-white/5 text-gray-300"
-                  }`}
-                >
-                  {value === "over" ? "↗ Over" : "↘ Under"}
-                </button>
-              ))}
+              {type !== "spread" &&
+                ["over", "under"].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setDirection(value)}
+                    className={`flex w-full min-w-0 items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold capitalize transition ${
+                      direction === value
+                        ? "border-[var(--accent-border)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                        : "border-white/10 bg-white/5 text-gray-300"
+                    }`}
+                  >
+                    {value === "over" ? "↗ Over" : "↘ Under"}
+                  </button>
+                ))}
             </div>
           )}
 
@@ -1413,6 +1506,13 @@ function dedupeRoster(list) {
   });
 }
 
+function formatSpread(value) {
+  if (value === undefined || value === null || value === "") return "0";
+  const num = Number(value);
+  if (Number.isNaN(num)) return `${value}`;
+  return num > 0 ? `+${num}` : `${num}`;
+}
+
 function extractPlayersFromSummary(summary) {
   const out = [];
   const teams = summary?.boxscore?.players || [];
@@ -1577,6 +1677,107 @@ function getPlayerStatValue(summary, playerId, playerName, statType) {
   if (st.includes("extra points")) return v.xpm ?? null;
 
   return null;
+}
+
+function evaluateSpread(summary, teamAbbr, line) {
+  const competition = summary?.header?.competitions?.[0];
+  const statusInfo = competition?.status?.type || {};
+  const state = statusInfo.state || "pre";
+  const completed = statusInfo.completed || statusInfo.name === "STATUS_FINAL";
+
+  const competitors = competition?.competitors || [];
+  const normalizedTeam = (teamAbbr || "").toUpperCase();
+  const teamComp = competitors.find(
+    (c) => (c?.team?.abbreviation || "").toUpperCase() === normalizedTeam
+  );
+  const opponentComp = competitors.find(
+    (c) => (c?.team?.abbreviation || "").toUpperCase() !== normalizedTeam
+  );
+
+  const teamScore = Number(teamComp?.score);
+  const opponentScore = Number(opponentComp?.score);
+  const scoresKnown =
+    Number.isFinite(teamScore) && Number.isFinite(opponentScore);
+
+  const baseStatus = state === "in" ? "live" : "unavailable";
+
+  if (!scoresKnown || line === undefined || line === null) {
+    return {
+      status: baseStatus,
+      result: 0,
+      gameScore: null,
+    };
+  }
+
+  const spreadLine = Number(line) || 0;
+  const adjusted = teamScore + spreadLine - opponentScore;
+
+  let status = baseStatus;
+  if (completed) {
+    status = adjusted > 0 ? "hit" : "miss";
+  }
+
+  return {
+    status,
+    result: adjusted,
+    gameScore: {
+      team: teamScore,
+      opponent: opponentScore,
+      opponentAbbr:
+        (opponentComp?.team?.abbreviation || "").toUpperCase() ||
+        opponentComp?.team?.shortDisplayName ||
+        "OPP",
+    },
+  };
+}
+
+function evaluateWinner(summary, teamAbbr) {
+  const competition = summary?.header?.competitions?.[0];
+  const statusInfo = competition?.status?.type || {};
+  const state = statusInfo.state || "pre";
+  const completed = statusInfo.completed || statusInfo.name === "STATUS_FINAL";
+
+  const competitors = competition?.competitors || [];
+  const normalizedTeam = (teamAbbr || "").toUpperCase();
+  const teamComp = competitors.find(
+    (c) => (c?.team?.abbreviation || "").toUpperCase() === normalizedTeam
+  );
+  const opponentComp = competitors.find(
+    (c) => (c?.team?.abbreviation || "").toUpperCase() !== normalizedTeam
+  );
+
+  const teamScore = Number(teamComp?.score);
+  const opponentScore = Number(opponentComp?.score);
+  const scoresKnown =
+    Number.isFinite(teamScore) && Number.isFinite(opponentScore);
+
+  const baseStatus = state === "in" ? "live" : "unavailable";
+  if (!scoresKnown) {
+    return {
+      status: baseStatus,
+      result: 0,
+      gameScore: null,
+    };
+  }
+
+  const margin = teamScore - opponentScore;
+  let status = baseStatus;
+  if (completed) {
+    status = margin > 0 ? "hit" : "miss";
+  }
+
+  return {
+    status,
+    result: margin,
+    gameScore: {
+      team: teamScore,
+      opponent: opponentScore,
+      opponentAbbr:
+        (opponentComp?.team?.abbreviation || "").toUpperCase() ||
+        opponentComp?.team?.shortDisplayName ||
+        "OPP",
+    },
+  };
 }
 
 function mapStatTypeToGroup(statType) {
